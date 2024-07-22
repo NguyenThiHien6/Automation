@@ -14,7 +14,9 @@ public class TestClass {
     public void setupClass() {
         System.out.println("Before class");
         WebDriverManager.chromedriver().setup();
+
         chromeDriver = new ChromeDriver();
+        chromeDriver.manage().window().maximize();
     }
 
     @BeforeMethod
