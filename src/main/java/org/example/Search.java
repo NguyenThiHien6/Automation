@@ -2,6 +2,7 @@ package org.example;
 
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.openqa.selenium.By;
+import org.openqa.selenium.ElementNotInteractableException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.interactions.Actions;
@@ -66,6 +67,7 @@ public class Search {
         checkmessage("Vui lòng nhập từ khóa để tìm kiếm");
     }
 
+
     @Test
     public void testspaceKeyword() {
         performSearch(" ");
@@ -83,7 +85,53 @@ public class Search {
         performSearch("mA Quỷ");
         verifySearchResults("mA Quỷ");
     }
-      //thực hiện tìm kiếm với keyword
+    @Test
+    public void checkKeywordPart() {
+        performSearch("tô bình yên vẽ hạnh");
+        verifySearchResults("Tô Bình Yên Vẽ Hạnh Phúc (Tái Bản 2023)");
+    }
+
+      //lôi ElementNotInteractableException, nút icon ko hđ
+     @Test
+    public void testcheckIconSerch() {
+            //nhap tu khoa
+         String keyword = "7";
+         WebElement searchField = chromeDriver.findElement(By.cssSelector("input.form-control.p-3[placeholder='Tìm kiếm']"));
+         searchField.sendKeys(keyword);
+
+         boolean iconClickedSuccessfully = false;
+         try {
+             WebElement iconSearch = chromeDriver.findElement(By.cssSelector("i.fa.fa-search"));
+
+             // Nhấp vào biểu tượng tìm kiếm
+             iconSearch.click();
+
+             // Nếu không xảy ra lỗi, cho rằng biểu tượng tìm kiếm hoạt động đúng
+             iconClickedSuccessfully = true;
+
+         } catch (ElementNotInteractableException e) {
+             // Xử lý lỗi nếu biểu tượng tìm kiếm không thể tương tác
+             Reporter.log("Actual: Biểu tượng tìm kiếm không hoạt động.");
+             System.out.println("Actual: Biểu tượng tìm kiếm không hoạt động.");
+         } catch (Exception e) {
+             // Xử lý các lỗi khác nếu cần
+             Reporter.log("Lỗi không mong muốn: " + e.getMessage());
+             System.out.println("Lỗi không mong muốn: " + e.getMessage());
+         }
+
+         // log messgage
+//         Reporter.log("Expected: Biểu tượng tìm kiếm hoạt động đúng.");
+//         Reporter.log("Actual: " + (iconClickedSuccessfully ? "Biểu tượng tìm kiếm đã hoạt động đúng." : "Biểu tượng tìm kiếm không hoạt động."));
+         System.out.println("Expected: Biểu tượng tìm kiếm hoạt động đúng.");
+         System.out.println("Actual: " + (iconClickedSuccessfully ? "Biểu tượng tìm kiếm đã hoạt động đúng." : "Biểu tượng tìm kiếm không hoạt động."));
+
+         // Kiểm tra
+         Assert.assertTrue(iconClickedSuccessfully, "Biểu tượng tìm kiếm không hoạt động như mong đợi.");
+     }
+
+
+
+    //thực hiện tìm kiếm với keyword
     private void performSearch(String keyword) {
         WebElement searchField = chromeDriver.findElement(By.cssSelector("input.form-control.p-3[placeholder='Tìm kiếm']"));
         Actions actions = new Actions(chromeDriver);
@@ -93,46 +141,31 @@ public class Search {
         sleep(2000);
     }
 
+        //check sp có chứa keyword
     private void verifySearchResults(String keyword) {
         WebDriverWait wait = new WebDriverWait(chromeDriver, Duration.ofSeconds(5));
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("ul > li > span")));
         List<WebElement> searchResults = chromeDriver.findElements(By.cssSelector("ul > li > span"));
 
-        boolean expected = searchResults.size() > 0;
-        boolean actual = false;
+        boolean allResultsContainKeyword = true;
         for (WebElement result : searchResults) {
-            if (result.getText().toLowerCase().contains(keyword.toLowerCase())) {
-                actual = true;
+            if (!result.getText().toLowerCase().contains(keyword.toLowerCase())) {
+                allResultsContainKeyword = false;
                 break;
             }
         }
 
-        // Log expected and actual
-        Reporter.log("Expected: " + expected);
-        Reporter.log("Actual: " + actual);
-        System.out.println("Expected: " + expected + ", Actual: " + actual);
+        // Log expected và actual
+        Reporter.log("Expected: KQ chứa keyword.");
+        Reporter.log("Actual: " + allResultsContainKeyword);
+        System.out.println("Expected:  Tất cả kết quả chứa keyword. Actual: " + allResultsContainKeyword);
 
-        // Ensure test passes but log failure
-        Assert.assertTrue(actual, "No products displayed that match the search keyword!");
+        //
+        Assert.assertTrue(allResultsContainKeyword, "Một hoặc nhiều sản phẩm không chứa từ khóa được tìm kiếm!");
+
     }
 
-//ktra kqua tìm kiếm
-    private void verifyNoSearchResults() {
-        WebDriverWait wait = new WebDriverWait(chromeDriver, Duration.ofSeconds(5));
-        wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("ul > li > span")));
-        List<WebElement> searchResults = chromeDriver.findElements(By.cssSelector("ul > li > span"));
 
-        boolean expected = searchResults.isEmpty();
-        boolean actual = expected;
-
-        // Log expected and actual
-        Reporter.log("Expected: " + expected);
-        Reporter.log("Actual: " + actual);
-        System.out.println("Expected: " + expected + ", Actual: " + actual);
-
-        // Ensure test passes but log failure
-        Assert.assertTrue(actual, "Some products are displayed but none were expected!");
-    }
 
 
     //ktra message
